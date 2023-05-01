@@ -1,18 +1,17 @@
-try:
-    from http import client as client
-except ImportError:
-    import httplib as client
-
 import requests
-from django.utils.translation import ugettext_lazy as _
-from wagtaillinkchecker import HTTP_STATUS_CODES
+from django.utils.translation import gettext_lazy as _
+
+from siacms.celery import app
+
+from http import HTTPStatus
+from .models import Scan
 
 
 def get_celery_worker_status():
     ERROR_KEY = "ERROR"
     try:
-        from celery.task.control import inspect
-        insp = inspect()
+        from celery.app.control import Control
+        insp = Control(app).inspect()
         d = insp.stats()
         if not d:
             d = {ERROR_KEY: 'No running Celery workers were found.'}
@@ -27,44 +26,6 @@ def get_celery_worker_status():
     return d
 
 
-class Link(Exception):
-
-    def __init__(self, url, page, status_code=None, error=None, site=None):
-        self.url = url
-        self.status_code = status_code
-        self.error = error
-        self.site = site
-        self.page = page
-
-    @property
-    def message(self):
-        if self.error:
-            return self.error
-        elif self.status_code in range(100, 300):
-            message = "Success"
-        elif self.status_code in range(500, 600) and self.url.startswith(self.site.root_url):
-            message = str(self.status_code) + ': ' + \
-                _('Internal server error, please notify the site administrator.')
-        else:
-            try:
-                message = str(self.status_code) + ': ' + \
-                    client.responses[self.status_code] + '.'
-            except KeyError:
-                message = str(self.status_code) + ': ' + _('Unknown error.')
-        return message
-
-    def __str__(self):
-        return self.url
-
-    def __eq__(self, other):
-        if not isinstance(other, Link):
-            return NotImplemented
-        return self.url == other.url
-
-    def __hash__(self):
-        return hash(self.url)
-
-
 def get_url(url, page, site):
     data = {
         'url': url,
@@ -75,37 +36,39 @@ def get_url(url, page, site):
     }
     response = None
     try:
-        response = requests.get(url, verify=True)
+        response = requests.get(url, verify=True, timeout=60)
         data['response'] = response
-    except (requests.exceptions.InvalidSchema, requests.exceptions.MissingSchema):
+    except (
+        requests.exceptions.InvalidSchema,
+        requests.exceptions.MissingSchema,
+    ):
         data['invalid_schema'] = True
         return data
-    except requests.exceptions.ConnectionError as e:
+    except requests.exceptions.ConnectionError:
         data['error'] = True
         data['error_message'] = _('There was an error connecting to this site')
         return data
     except requests.exceptions.RequestException as e:
         data['error'] = True
-        data['status_code'] = response.status_code
+        # data['status_code'] = response.status_code
         data['error_message'] = type(e).__name__ + ': ' + str(e)
         return data
 
     else:
         if response.status_code not in range(100, 400):
-            error_message_for_status_code = HTTP_STATUS_CODES.get(
-                response.status_code)
             data['error'] = True
             data['status_code'] = response.status_code
-            if error_message_for_status_code:
-                data['error_message'] = error_message_for_status_code[0]
-            else:
+            try:
+                data['error_message'] = HTTPStatus(response.status_code).phrase
+            except ValueError:
                 if response.status_code in range(400, 500):
                     data['error_message'] = 'Client error'
                 elif response.status_code in range(500, 600):
                     data['error_message'] = 'Server Error'
                 else:
-                    data['error_message'] = "Error: Unknown HTTP Status Code '{0}'".format(
-                        response.status_code)
+                    data['error_message'] = (
+                        "Error: Unknown HTTP Status Code '{0}'".format(
+                            response.status_code))
         return data
 
 
@@ -118,20 +81,19 @@ def clean_url(url, site):
     return url
 
 
-def broken_link_scan(site, run_sync=False, verbosity=1):
-    from wagtaillinkchecker.models import Scan, ScanLink
+def broken_link_scan(site, run_sync=False, verbosity=0):
     pages = site.root_page.get_descendants(inclusive=True).live().public()
     scan = Scan.objects.create(site=site)
 
+    links = []
     for page in pages:
-        try:
-            url = page.full_url
-            if verbosity > 1:
-                print(f"Checking {url}")
-            ScanLink.objects.get(url=url, scan=scan)
-        except ScanLink.DoesNotExist:
-            link = ScanLink.objects.create(
-                url=page.full_url, page=page, scan=scan)
-            link.check_link(run_sync, verbosity=verbosity)
+        url = page.full_url
+        if verbosity > 1:
+            print(f"Checking {url}")
+        link = scan.add_link(page=page, url=url)
+        links.append(link)
+
+    for link in links:
+        link.check_link(run_sync, verbosity)
 
     return scan

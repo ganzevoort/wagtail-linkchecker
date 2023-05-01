@@ -1,17 +1,18 @@
 from celery import shared_task
-from wagtaillinkchecker.scanner import get_url, clean_url
-from wagtaillinkchecker.models import ScanLink
 from bs4 import BeautifulSoup
-from django.utils.translation import ugettext_lazy as _
-
-from django.db.utils import IntegrityError
+from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+
+from .scanner import get_url, clean_url
+from .models import ScanLink
 
 
 @shared_task
-def check_link(link_pk, run_sync=False, verbosity=1, ):
+def check_link(link_pk, run_sync=False, verbosity=1):
     link = ScanLink.objects.get(pk=link_pk)
-    site = link.scan.site
+    scan = link.scan
+    site = scan.site
+
     url = get_url(link.url, link.page, site)
     link.status_code = url.get('status_code')
 
@@ -27,36 +28,30 @@ def check_link(link_pk, run_sync=False, verbosity=1, ):
         soup = BeautifulSoup(url['response'].content, 'html5lib')
         anchors = soup.find_all('a')
         images = soup.find_all('img')
+        link_urls = []
+        new_links = []
 
         for anchor in anchors:
-            link_href = anchor.get('href')
-            link_href = clean_url(link_href, site)
-            if verbosity > 1:
-                print(f"cleaned link_href: {link_href}")
-            if link_href:
-                try:
-                    new_link = link.scan.add_link(page=link.page, url=link_href)
-                    new_link.check_link(run_sync, verbosity)
-                except IntegrityError:
-                    pass
-
+            link_urls.append(anchor.get('href'))
         for image in images:
-            image_src = image.get('src')
-            image_src = clean_url(image_src, site)
+            link_urls.append(image.get('src'))
+
+        for link_url in link_urls:
+            link_url = clean_url(link_url, site)
             if verbosity > 1:
-                print(f"cleaned image_src: {image_src}")
-            if image_src:
-                try:
-                    new_link = link.scan.add_link(page=link.page, url=image_src)
-                    new_link.check_link(run_sync, verbosity)
-                except IntegrityError:
-                    pass
+                print(f"cleaned link_url: {link_url}")
+            if link_url:
+                new_link = scan.add_link(page=link.page, url=link_url)
+                if new_link:
+                    new_links.append(new_link)
+        for new_link in new_links:
+            new_link.check_link(run_sync, verbosity)
+
     link.crawled = True
     link.save()
 
-    if link.scan.links.non_scanned_links():
+    if scan.links.non_scanned_links():
         pass
     else:
-        scan = link.scan
         scan.scan_finished = timezone.now()
         scan.save()

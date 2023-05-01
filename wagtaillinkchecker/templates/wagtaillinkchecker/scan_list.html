@@ -26,6 +26,7 @@
 						class='avaliablity'>
 					{% if scan.is_finished %}
 					{% blocktrans %}Completed{% endblocktrans %}
+                                        {{scan.scan_finished}}
 					{% else %}
 					{% blocktrans with links=scan.links.count %}{{links}} links found{% endblocktrans %} <br />
 					{% blocktrans with crawled_links=scan.links.crawled_links.count %}{{crawled_links}} links crawled{% endblocktrans %}<br />

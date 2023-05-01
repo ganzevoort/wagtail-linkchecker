@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# flake8: noqa
 """
 Install wagtail-linkchecker using setuptools
 """
@@ -18,9 +19,9 @@ setup(
     url='https://github.com/neon-jungle/wagtail-linkchecker/',
 
     install_requires=[
-        'wagtail>=1.0',
+        'wagtail>=4.0',
         'requests>=2.9.1',
-        'celery>=4.0,<5'
+        'celery>=5.0'
     ],
     zip_safe=False,
     license='BSD License',

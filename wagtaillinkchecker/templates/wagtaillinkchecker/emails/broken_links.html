@@ -1,14 +1,20 @@
 Hi {{user}},<br>
 <br>
-The following links on the page <a href='{{base_url}}{% url 'wagtailadmin_pages:edit' page.id %}'>{{page.title}}</a> have come up as broken in an automated scan.<br>
+The following links have come up as broken in an automated scan.<br>
 <br>
-{% for link in page_broken_links %}
-	<a href='{{link}}'>{{link}}</a>
-	<br>
-{% endfor %}
-<br><br>
-<a href='{{base_url}}{% url 'wagtailadmin_pages:edit' page.id %}'>Edit this page now.</a>
-<br><br>
+<ul>
+  {% for page in pages %}
+  <li>
+    On the page <a href='{{base_url}}{% url 'wagtailadmin_pages:edit' page.id %}'>{{page.title}}</a>:
+    <ul>
+    {% for link in page.broken_links %}
+    <li><a href='{{link}}'>{{link}}</a></li>
+    {% endfor %}
+    </ul>
+    <a href='{{base_url}}{% url 'wagtailadmin_pages:edit' page.id %}'>Edit this page now.</a>
+  </li>
+  {% endfor %}
+</ul>
 <p>Thanks,
 <br>
 {{site_name}}

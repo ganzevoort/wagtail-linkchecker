@@ -1,41 +1,27 @@
-from __future__ import print_function
+from functools import lru_cache
 
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 
-try:
-    from django.utils.lru_cache import lru_cache
-except ModuleNotFoundError:
-    from functools import lru_cache
+from wagtail.admin import messages
+from wagtail.admin.panels import (
+    ObjectList,
+    extract_panel_definitions_from_model_class,
+)
+from wagtail.models import Site
 
-from django.utils.translation import ugettext_lazy as _
-
-from wagtaillinkchecker.forms import SitePreferencesForm
-from wagtaillinkchecker.models import SitePreferences, Scan
-from wagtaillinkchecker.pagination import paginate
-from wagtaillinkchecker.scanner import broken_link_scan, get_celery_worker_status
-from wagtaillinkchecker import utils
-
-if utils.is_wagtail_version_more_than_equal_to_2_0():
-    from wagtail.admin import messages
-    from wagtail.admin.edit_handlers import (ObjectList,
-                                             extract_panel_definitions_from_model_class)
-    from wagtail.core.models import Site
-else:
-    from wagtail.wagtailadmin import messages
-    from wagtail.wagtailadmin.edit_handlers import (ObjectList,
-                                                    extract_panel_definitions_from_model_class)
-    from wagtail.wagtailcore.models import Site
+from .forms import SitePreferencesForm
+from .models import SitePreferences, Scan
+from .pagination import paginate
+from .scanner import broken_link_scan, get_celery_worker_status
 
 
 @lru_cache()
 def get_edit_handler(model):
     panels = extract_panel_definitions_from_model_class(model, ['site'])
 
-    if utils.is_wagtail_version_more_than_equal_to_2_5():
-        return ObjectList(panels).bind_to(model=model)
-    else:
-        return ObjectList(panels).bind_to_model(model)
+    return ObjectList(panels).bind_to_model(model)
 
 
 def scan(request, scan_pk):
@@ -47,8 +33,6 @@ def scan(request, scan_pk):
 
 
 def index(request):
-    from django.conf import settings
-
     site = Site.find_for_request(request)
     scans = Scan.objects.filter(site=site).order_by('-scan_started')
 
@@ -95,12 +79,9 @@ def settings(request):
                 'The form could not be saved due to validation errors'))
     else:
         form = SitePreferencesForm(instance=instance)
-        if utils.is_wagtail_version_more_than_equal_to_2_5():
-            edit_handler = object_list.bind_to(
-                instance=SitePreferences, form=form, request=request)
-        else:
-            edit_handler = object_list.bind_to_instance(
-                instance=SitePreferences, form=form, request=request)
+        edit_handler = object_list.get_bound_panel(
+            instance=SitePreferences, form=form, request=request
+        )
 
     return render(request, 'wagtaillinkchecker/settings.html', {
         'form': form,

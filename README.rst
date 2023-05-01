@@ -43,6 +43,9 @@ The automated scans will do the same as manually conducting a scan, but instead 
 Command options
 ---------------
 
+``--automated``
+    Run synchronously, but only if automated scanning is enabled.
+
 ``--do-not-send-mail`` 
     Don't send an email to administrators once scan is complete.
 

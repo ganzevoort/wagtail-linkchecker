@@ -1,27 +1,35 @@
-from sys import version
+from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_delete
+from django.db.utils import IntegrityError, DataError
 from django.dispatch import receiver
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
-from wagtaillinkchecker import utils
-
-if utils.is_wagtail_version_more_than_equal_to_2_0():
-    from wagtail.core.models import Site
-    from wagtail.core.models import Page
-else:
-    from wagtail.wagtailcore.models import Site
-    from wagtail.wagtailcore.models import Page
+from wagtail.models import Site, Page
 
 
 class SitePreferences(models.Model):
     site = models.OneToOneField(
-        Site, unique=True, db_index=True, editable=False, on_delete=models.CASCADE)
+        Site,
+        unique=True, db_index=True, editable=False, on_delete=models.CASCADE,
+    )
     automated_scanning = models.BooleanField(
         default=False,
         help_text=_(
-            'Conduct automated sitewide scans for broken links, and send emails if a problem is found.'),
+            'Conduct automated sitewide scans for broken links, '
+            'and send emails if a problem is found.'),
         verbose_name=_('Automated Scanning')
+    )
+    email_sender = models.EmailField(
+        default=settings.DEFAULT_FROM_EMAIL,
+        help_text=_('Sender of the problem report emails'),
+    )
+    email_recipient = models.EmailField(
+        blank=True,
+        default='',
+        help_text=_(
+            'Recipient of the full problem report emails '
+            '(page owners get reports too)'),
     )
 
 
@@ -36,10 +44,18 @@ class Scan(models.Model):
         return self.scan_finished is not None
 
     def add_link(self, url=None, page=None):
-        return ScanLink.objects.create(scan=self, url=url, page=page)
+        try:
+            return ScanLink.objects.create(scan=self, url=url, page=page)
+        except IntegrityError:
+            return None  # link already exists, fine
+        except DataError:
+            return None  # probably url too long
 
     def result(self):
-        return _('{0} broken links found out of {1} links'.format(self.broken_link_count(), self.links.count()))
+        return _('{0} broken links found out of {1} links').format(
+            self.broken_link_count(),
+            self.links.count(),
+        )
 
     def __str__(self):
         return 'Scan - {0}'.format(self.scan_started.strftime('%d/%m/%Y'))
@@ -74,7 +90,8 @@ class ScanLink(models.Model):
     # If the link has been crawled
     crawled = models.BooleanField(default=False)
 
-    # Link is not necessarily broken, it is invalid (eg a tel link or not an actual url)
+    # Link is not necessarily broken, it is invalid (eg a tel link or
+    # not an actual url)
     invalid = models.BooleanField(default=False)
 
     # If the link is broken or not
@@ -108,9 +125,9 @@ class ScanLink(models.Model):
         from wagtaillinkchecker.tasks import check_link
 
         if run_sync:
-            check_link(self.pk, run_sync=run_sync, verbosity=verbosity)
+            check_link(self.pk, run_sync, verbosity)
         else:
-            check_link.apply_async((self.pk, run_sync, verbosity))
+            check_link.delay(self.pk, run_sync, verbosity)
 
 
 @receiver(pre_delete, sender=Page)
