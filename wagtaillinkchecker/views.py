@@ -1,5 +1,7 @@
 from functools import lru_cache
 
+from django.db.models import F
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect, render
 from django.utils.translation import gettext_lazy as _
@@ -14,7 +16,7 @@ from wagtail.models import Site
 from .forms import SitePreferencesForm
 from .models import SitePreferences, Scan
 from .pagination import paginate
-from .scanner import broken_link_scan, get_celery_worker_status
+from .scanner import get_celery_worker_status
 
 
 @lru_cache()
@@ -26,9 +28,23 @@ def get_edit_handler(model):
 
 def scan(request, scan_pk):
     scan = get_object_or_404(Scan, pk=scan_pk)
-
+    groupby = request.GET.get('groupby')
+    groupables = {
+        'status_code': _('Status code'),
+        'domainname': _('Domain name'),
+        'page__title': _('Page'),
+    }
+    if groupby not in groupables:
+        groupby = 'status_code'
     return render(request, 'wagtaillinkchecker/scan.html', {
-        'scan': scan
+        'scan': scan,
+        'groupables': groupables,
+        'groupby': groupby,
+        'broken': (
+            scan.links.broken_links()
+            .annotate(groupby=F(groupby))
+            .order_by(groupby, 'status_code', 'domainname', 'url')
+        ),
     })
 
 
@@ -42,6 +58,23 @@ def index(request):
         'page': page,
         'paginator': paginator,
         'scans': scans
+    })
+
+
+def stop(request, scan_pk):
+    scan = get_object_or_404(Scan, pk=scan_pk)
+
+    if scan.scan_finished:
+        return redirect('wagtaillinkchecker')
+
+    if request.method == 'POST':
+        scan.scan_finished = timezone.now()
+        scan.save()
+        messages.success(request, _('The scan was stopped.'))
+        return redirect('wagtaillinkchecker')
+
+    return render(request, 'wagtaillinkchecker/stop.html', {
+        'scan': scan,
     })
 
 
@@ -93,7 +126,8 @@ def run_scan(request):
     site = Site.find_for_request(request)
     celery_status = get_celery_worker_status()
     if 'ERROR' not in celery_status:
-        broken_link_scan(site)
+        scan = Scan.objects.create(site=site)
+        scan.scan_all_pages()
     else:
         messages.warning(request, _(
             'No celery workers are running, the scan was not conducted.'))

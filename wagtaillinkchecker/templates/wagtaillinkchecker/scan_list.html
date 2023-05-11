@@ -16,15 +16,23 @@
                         </h2>
                         <ul class="actions">
                             <li><a href="{% url 'wagtaillinkchecker_scan' scan_pk=scan.pk %}" class="button button-small button-secondary yes">{% trans 'View Scan' %}</a></li>
+                            {% if scan.scan_finished %}
                             <li><a href="{% url 'wagtaillinkchecker_delete' scan_pk=scan.pk %}" class="button button-small no button-secondary yes">{% trans 'Delete Scan' %}</a></li>
+                            {% else %}
+                            <li><a href="{% url 'wagtaillinkchecker_stop' scan_pk=scan.pk %}" class="button button-small no button-secondary yes">{% trans 'Stop Scan' %}</a></li>
+                            {% endif %}
                         </ul>
+                        <!--
+                        {% if scan.run_sync %}Synchronous{% else %}Background task{% endif %}
+                        Verbosity {{ scan.verbosity }}
+                        -->
                     </td>
                     <td class='amount'>{{scan.links.valid.count}}</td>
 					<td class='amount'>{% blocktrans with broken_links=scan.links.broken_links.count links=scan.links.count %}{{broken_links}} broken links out of {{links}} links{% endblocktrans %}</td>
                     <td
-						style='color:{% if scan.is_finished %}green{% else %}orange{% endif %};font-weight:bold;'
+						style='color:{% if scan.scan_finished %}green{% else %}orange{% endif %};font-weight:bold;'
 						class='avaliablity'>
-					{% if scan.is_finished %}
+					{% if scan.scan_finished %}
 					{% blocktrans %}Completed{% endblocktrans %}
                                         {{scan.scan_finished}}
 					{% else %}

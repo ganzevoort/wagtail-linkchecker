@@ -10,11 +10,14 @@ from .models import ScanLink
 
 
 @shared_task
-def check_link(link_pk, run_sync=False, verbosity=0):
+def check_link(link_pk):
     link = ScanLink.objects.get(pk=link_pk)
     scan = link.scan
 
-    if verbosity > 1:
+    if scan.scan_finished:
+        return
+
+    if scan.verbosity > 1:
         print(f"Check link {link.url} for page {link.page.id}:")
 
     response = None
@@ -43,12 +46,12 @@ def check_link(link_pk, run_sync=False, verbosity=0):
                     [image.get('src') for image in soup.find_all('img')],
                     page=link.page,
                 )
-                if new_links and verbosity > 1:
+                if new_links and scan.verbosity > 1:
                     print("New links:")
                     for new_link in new_links:
                         print(f"\t{new_link.url}")
                 for new_link in new_links:
-                    new_link.check_link(run_sync, verbosity)
+                    new_link.check_link()
 
         else:
             link.broken = True

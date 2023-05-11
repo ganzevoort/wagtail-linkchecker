@@ -1,0 +1,16 @@
+{% extends "wagtailadmin/base.html" %}
+{% load i18n %}
+{% block titletag %}{% trans "Link Checker" %}{% endblock %}
+{% block content %}
+
+	{% trans "Stop" as new_str %}
+	{% include "wagtailadmin/shared/header.html" with title=new_str subtitle=scan icon="link" %}
+
+	<div class="row row-flush nice-padding">
+		<form action="{% url 'wagtaillinkchecker_stop' scan_pk=scan.pk %}" method="POST">
+			{% csrf_token %}
+			<p>{% blocktrans %}Are you sure you want to stop this scan?{% endblocktrans %}</p>
+			<button class='button' type="submit"> {% trans 'Yes, stop it' %} </button>
+		</form>
+	</div>
+{% endblock %}

@@ -1,64 +1,63 @@
+from datetime import timedelta
+from django.utils import timezone
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 
 from wagtail.models import Site
 
-from wagtaillinkchecker.scanner import broken_link_scan
+from wagtaillinkchecker.models import Scan, SitePreferences
 from wagtaillinkchecker.report import email_report
 
 
-def automated_scanning_enabled(site):
+def get_site_preferences(site):
     try:
-        return site.sitepreferences.automated_scanning
+        return site.sitepreferences
     except ObjectDoesNotExist:
-        return False
+        return SitePreferences.objects.create(site=site)
+
+
+def cleanup(site, preferences, verbosity):
+    cutoff_age = timedelta(days=preferences.automated_cleanup_days)
+    cutoff = timezone.now() - cutoff_age
+    for scan in Scan.objects.filter(site=site, scan_started__lt=cutoff):
+        if verbosity:
+            print(f"Automated cleanup: remove {scan}")
+        scan.delete()
+
+
+def runscan(site, preferences, verbosity):
+    scan = Scan.objects.create(site=site, run_sync=True, verbosity=verbosity)
+    scan.scan_all_pages()
+
+    if verbosity:
+        total_links = scan.links.crawled_links()
+        broken_links = scan.links.broken_links()
+        print(
+            f'Found {len(total_links)} total links, '
+            f'with {len(broken_links)} broken links.')
+
+    if preferences.email_reports:
+        messages = email_report(scan)
+        if verbosity:
+            print(f'Sent {len(messages)} messages')
+    else:
+        if verbosity:
+            print('Will not send any emails')
 
 
 class Command(BaseCommand):
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--do-not-send-mail',
-            action='store_true',
-            help='Do not send mails when finding broken links',
-        )
-        parser.add_argument(
-            '--run-synchronously',
-            action='store_true',
-            help='Run checks synchronously (avoid the need for Celery)',
-        )
-        parser.add_argument(
-            '--automated',
-            action='store_true',
-            help='Run checks and send emails if automated scanning is enabled',
-        )
 
     def handle(self, *args, **kwargs):
         site = Site.objects.filter(is_default_site=True).first()
-        pages = site.root_page.get_descendants(inclusive=True).live().public()
+        preferences = get_site_preferences(site)
         verbosity = kwargs.get('verbosity', 1)
-        automated = kwargs.get('automated')
-        run_sync = automated or kwargs.get('run_synchronously')
-        send_emails = automated and not kwargs.get('do_not_send_mail')
 
-        if automated and not automated_scanning_enabled(site):
-            if verbosity:
-                print('Automated scanning not enabled')
-            return
+        if preferences.automated_cleanup:
+            cleanup(site, preferences, verbosity)
+        elif verbosity:
+            print('Automated cleanup not enabled')
 
-        if verbosity:
-            print(f'Scanning {len(pages)} pages...')
-        scan = broken_link_scan(site, run_sync, verbosity)
-        total_links = scan.links.crawled_links()
-        broken_links = scan.links.broken_links()
-        if verbosity:
-            print(
-                f'Found {len(total_links)} total links, '
-                f'with {len(broken_links)} broken links.')
-
-        if send_emails:
-            messages = email_report(scan)
-            if verbosity:
-                print(f'Sent {len(messages)} messages')
-        else:
-            if verbosity:
-                print('Will not send any emails')
+        if preferences.automated_scanning:
+            runscan(site, preferences, verbosity)
+        elif verbosity:
+            print('Automated scanning not enabled')

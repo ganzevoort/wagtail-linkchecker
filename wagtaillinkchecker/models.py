@@ -14,16 +14,30 @@ class SitePreferences(models.Model):
         Site,
         unique=True, db_index=True, editable=False, on_delete=models.CASCADE,
     )
+    automated_cleanup = models.BooleanField(
+        default=False,
+        help_text=_('Automatically remove old scans'),
+        verbose_name=_('Automated Cleanup'),
+    )
+    automated_cleanup_days = models.PositiveSmallIntegerField(
+        default=7,
+        help_text=_('Number of days to keep scans in automated cleanup'),
+        verbose_name=_('Automated Cleanup Age'),
+    )
     automated_scanning = models.BooleanField(
         default=False,
-        help_text=_(
-            'Conduct automated sitewide scans for broken links, '
-            'and send emails if a problem is found.'),
-        verbose_name=_('Automated Scanning')
+        help_text=_('Conduct automated sitewide scans for broken links'),
+        verbose_name=_('Automated Scanning'),
+    )
+    email_reports = models.BooleanField(
+        default=False,
+        help_text=_('Send report emails after automated scans'),
+        verbose_name=_('Email Reports'),
     )
     email_sender = models.EmailField(
         default=settings.DEFAULT_FROM_EMAIL,
         help_text=_('Sender of the problem report emails'),
+        verbose_name=_('Email Sender')
     )
     email_recipient = models.EmailField(
         blank=True,
@@ -31,6 +45,7 @@ class SitePreferences(models.Model):
         help_text=_(
             'Recipient of the full problem report emails '
             '(page owners get reports too)'),
+        verbose_name=_('Email Recipient')
     )
 
 
@@ -39,10 +54,8 @@ class Scan(models.Model):
     scan_started = models.DateTimeField(auto_now_add=True)
     site = models.ForeignKey(
         Site, db_index=True, editable=False, on_delete=models.CASCADE)
-
-    @property
-    def is_finished(self):
-        return self.scan_finished is not None
+    run_sync = models.BooleanField(default=False)
+    verbosity = models.PositiveSmallIntegerField(default=0)
 
     def add_link(self, url, page=None, follow=False):
         if not url or url.startswith('#'):
@@ -56,7 +69,6 @@ class Scan(models.Model):
             return  # already exists, fine
         try:
             link = self.links.create(url=link_url, page=page, follow=follow)
-            # add parsed.netloc so links can easily be grouped by sitename
         except DataError:
             return  # probably url too long
         return link
@@ -68,10 +80,25 @@ class Scan(models.Model):
                 new_links.append(newlink)
         return new_links
 
-    def result(self):
-        return _('{0} broken links found out of {1} links').format(
-            self.broken_link_count(),
-            self.links.count(),
+    def scan_pages(self, pages):
+        if self.verbosity:
+            print(f'Scanning {len(pages)} pages...')
+        links = []
+        for page in pages:
+            url = page.full_url
+            if self.verbosity > 1:
+                print(f"Page {url}, {page.id}: {page.title}")
+            link = self.add_link(url, page=page, follow=True)
+            if link:
+                links.append(link)
+        for link in links:
+            link.check_link()
+
+    def scan_all_pages(self):
+        self.scan_pages(
+            self.site.root_page.get_descendants(inclusive=True)
+            .live().public()
+            .order_by('-latest_revision_created_at')
         )
 
     def __str__(self):
@@ -83,17 +110,17 @@ class ScanLinkQuerySet(models.QuerySet):
     def valid(self):
         return self.filter(invalid=False)
 
+    def invalid_links(self):
+        return self.filter(invalid=True)
+
     def non_scanned_links(self):
         return self.filter(crawled=False)
 
     def broken_links(self):
-        return self.valid().filter(broken=True)
+        return self.filter(broken=True)
 
     def crawled_links(self):
         return self.valid().filter(crawled=True)
-
-    def invalid_links(self):
-        return self.valid().filter(invalid=True)
 
     def working_links(self):
         return self.valid().filter(broken=False, crawled=True)
@@ -103,6 +130,9 @@ class ScanLink(models.Model):
     scan = models.ForeignKey(Scan, related_name='links',
                              on_delete=models.CASCADE)
     url = models.URLField(max_length=500)
+
+    # Domain name part (netloc) of the url, for easy grouping
+    domainname = models.CharField(default='', blank=True, max_length=500)
 
     # If the contents found at that url should be scanned for additional links
     follow = models.BooleanField(default=False)
@@ -141,13 +171,19 @@ class ScanLink(models.Model):
     def page_is_deleted(self):
         return self.page_deleted and self.page_slug
 
-    def check_link(self, run_sync=False, verbosity=0):
+    def save(self, *args, **kwargs):
+        parsed = urlparse(self.url)
+        # add parsed.netloc so links can easily be grouped by domainname
+        self.domainname = parsed.netloc
+        super().save(*args, **kwargs)
+
+    def check_link(self):
         from wagtaillinkchecker.tasks import check_link
 
-        if run_sync:
-            check_link(self.pk, run_sync, verbosity)
+        if self.scan.run_sync:
+            check_link(self.pk)
         else:
-            check_link.delay(self.pk, run_sync, verbosity)
+            check_link.delay(self.pk)
 
 
 @receiver(pre_delete, sender=Page)
