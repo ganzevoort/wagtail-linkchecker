@@ -1,57 +1,72 @@
+import requests
+from http import HTTPStatus
 from celery import shared_task
 from bs4 import BeautifulSoup
+
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
-from .scanner import get_url, clean_url
 from .models import ScanLink
 
 
 @shared_task
-def check_link(link_pk, run_sync=False, verbosity=1):
+def check_link(link_pk, run_sync=False, verbosity=0):
     link = ScanLink.objects.get(pk=link_pk)
     scan = link.scan
-    site = scan.site
 
-    url = get_url(link.url, link.page, site)
-    link.status_code = url.get('status_code')
+    if verbosity > 1:
+        print(f"Check link {link.url} for page {link.page.id}:")
 
-    if url['error']:
-        link.broken = True
-        link.error_text = url['error_message']
-
-    elif url['invalid_schema']:
+    response = None
+    try:
+        response = requests.get(link.url, verify=True, timeout=60)
+    except (
+        requests.exceptions.InvalidSchema,
+        requests.exceptions.MissingSchema,
+    ):
         link.invalid = True
         link.error_text = _('Link was invalid')
+    except requests.exceptions.ConnectionError:
+        link.broken = True
+        link.error_text = _('There was an error connecting to this site')
+    except requests.exceptions.RequestException as e:
+        link.broken = True
+        link.error_text = type(e).__name__ + ': ' + str(e)
 
-    elif link.page.full_url == link.url:
-        soup = BeautifulSoup(url['response'].content, 'html5lib')
-        anchors = soup.find_all('a')
-        images = soup.find_all('img')
-        link_urls = []
-        new_links = []
+    else:
+        link.status_code = response.status_code
+        if response.status_code in range(100, 400):
+            if link.follow:
+                soup = BeautifulSoup(response.content, 'html5lib')
+                new_links = scan.add_links(
+                    [anchor.get('href') for anchor in soup.find_all('a')] +
+                    [image.get('src') for image in soup.find_all('img')],
+                    page=link.page,
+                )
+                if new_links and verbosity > 1:
+                    print("New links:")
+                    for new_link in new_links:
+                        print(f"\t{new_link.url}")
+                for new_link in new_links:
+                    new_link.check_link(run_sync, verbosity)
 
-        for anchor in anchors:
-            link_urls.append(anchor.get('href'))
-        for image in images:
-            link_urls.append(image.get('src'))
-
-        for link_url in link_urls:
-            link_url = clean_url(link_url, site)
-            if verbosity > 1:
-                print(f"cleaned link_url: {link_url}")
-            if link_url:
-                new_link = scan.add_link(page=link.page, url=link_url)
-                if new_link:
-                    new_links.append(new_link)
-        for new_link in new_links:
-            new_link.check_link(run_sync, verbosity)
+        else:
+            link.broken = True
+            try:
+                link.error_text = HTTPStatus(response.status_code).phrase
+            except ValueError:
+                if response.status_code in range(400, 500):
+                    link.error_text = _('Client error')
+                elif response.status_code in range(500, 600):
+                    link.error_text = _('Server Error')
+                else:
+                    link.error_text = (
+                        _("Error: Unknown HTTP Status Code '{0}'").format(
+                            response.status_code))
 
     link.crawled = True
     link.save()
 
-    if scan.links.non_scanned_links():
-        pass
-    else:
+    if not scan.links.non_scanned_links():
         scan.scan_finished = timezone.now()
         scan.save()

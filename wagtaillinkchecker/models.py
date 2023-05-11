@@ -1,7 +1,8 @@
+from urllib.parse import urlparse, urljoin
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_delete
-from django.db.utils import IntegrityError, DataError
+from django.db.utils import DataError
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
@@ -43,13 +44,29 @@ class Scan(models.Model):
     def is_finished(self):
         return self.scan_finished is not None
 
-    def add_link(self, url=None, page=None):
+    def add_link(self, url, page=None, follow=False):
+        if not url or url.startswith('#'):
+            return
+        base_url = page.full_url if page else self.scan.root_url
+        link_url = urljoin(base_url, url)
+        parsed = urlparse(link_url)
+        if parsed.scheme not in ('http', 'https'):
+            return
+        if self.links.filter(url=link_url).exists():
+            return  # already exists, fine
         try:
-            return ScanLink.objects.create(scan=self, url=url, page=page)
-        except IntegrityError:
-            return None  # link already exists, fine
+            link = self.links.create(url=link_url, page=page, follow=follow)
+            # add parsed.netloc so links can easily be grouped by sitename
         except DataError:
-            return None  # probably url too long
+            return  # probably url too long
+        return link
+
+    def add_links(self, urls, page=None):
+        new_links = []
+        for url in urls:
+            if newlink := self.add_link(url, page=page):
+                new_links.append(newlink)
+        return new_links
 
     def result(self):
         return _('{0} broken links found out of {1} links').format(
@@ -87,6 +104,9 @@ class ScanLink(models.Model):
                              on_delete=models.CASCADE)
     url = models.URLField(max_length=500)
 
+    # If the contents found at that url should be scanned for additional links
+    follow = models.BooleanField(default=False)
+
     # If the link has been crawled
     crawled = models.BooleanField(default=False)
 
@@ -121,7 +141,7 @@ class ScanLink(models.Model):
     def page_is_deleted(self):
         return self.page_deleted and self.page_slug
 
-    def check_link(self, run_sync=False, verbosity=1):
+    def check_link(self, run_sync=False, verbosity=0):
         from wagtaillinkchecker.tasks import check_link
 
         if run_sync:

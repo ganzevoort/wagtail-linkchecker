@@ -1,0 +1,6 @@
+# docker run --rm -v $(pwd):/code -w /code python \
+#     sh -c 'pip install flake8 && flake8'
+
+[flake8]
+exclude =
+	migrations
