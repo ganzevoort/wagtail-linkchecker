@@ -1,0 +1,26 @@
+{% load i18n %}
+<p>
+<a href='{{link}}' target="_blank">{{link}}</a>
+
+{% if link.page %}
+-
+<a href="{% url 'wagtailadmin_pages:edit' link.page.id %}"
+   target="_blank" class="button button-small">
+  {% trans 'Edit page containing this link' %}
+</a>
+{% endif %}
+
+{% if link.status_code %}
+<br/><b>{% trans 'Status Code' %}:</b>{{link.status_code}}
+{% endif %}
+
+{% if link.error_text %}
+<br/><b>{% trans 'Error' %}:</b> {{link.error_text}}
+{% endif %}
+
+{% if link.page_is_deleted %}
+<br/><b>{% trans 'Info' %}:</b>
+{% trans 'PAGE CONTAINING THIS LINK WAS DELETED' %}
+{% endif %}
+
+</p>

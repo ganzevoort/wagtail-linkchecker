@@ -11,6 +11,7 @@ from wagtail.admin.panels import (
     ObjectList,
     extract_panel_definitions_from_model_class,
 )
+from wagtail.admin.ui.components import Component
 from wagtail.models import Site
 
 from .forms import SitePreferencesForm
@@ -26,8 +27,47 @@ def get_edit_handler(model):
     return ObjectList(panels).bind_to_model(model)
 
 
+class ScanPanel(Component):
+    template_name = 'wagtaillinkchecker/scanpanel.html'
+
+
+class BrokenPanel(ScanPanel):
+
+    def get_context_data(self, parent_context):
+        context = super().get_context_data(parent_context)
+        context['sectionname'] = 'broken'
+        context['sectiontitle'] = _('Broken Links')
+        context['links'] = parent_context['links'].broken_links()
+        return context
+
+
+class WorkingPanel(ScanPanel):
+
+    def get_context_data(self, parent_context):
+        context = super().get_context_data(parent_context)
+        context['sectionname'] = 'working'
+        context['sectiontitle'] = _('Working Links')
+        context['links'] = parent_context['links'].working_links()
+        return context
+
+
+class TodoPanel(ScanPanel):
+
+    def get_context_data(self, parent_context):
+        context = super().get_context_data(parent_context)
+        context['sectionname'] = 'todo'
+        context['sectiontitle'] = _('Links To Be Scanned')
+        context['links'] = parent_context['links'].non_scanned_links()
+        return context
+
+
 def scan(request, scan_pk):
     scan = get_object_or_404(Scan, pk=scan_pk)
+    panels = [
+        BrokenPanel(),
+        WorkingPanel(),
+        TodoPanel(),
+    ]
     groupby = request.GET.get('groupby')
     groupables = {
         'status_code': _('Status code'),
@@ -37,13 +77,14 @@ def scan(request, scan_pk):
     if groupby not in groupables:
         groupby = 'status_code'
     return render(request, 'wagtaillinkchecker/scan.html', {
+        'panels': panels,
         'scan': scan,
         'groupables': groupables,
         'groupby': groupby,
-        'broken': (
-            scan.links.broken_links()
+        'links': (
+            scan.links
             .annotate(groupby=F(groupby))
-            .order_by(groupby, 'status_code', 'domainname', 'url')
+            .order_by('groupby', 'status_code', 'domainname', 'url')
         ),
     })
 

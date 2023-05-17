@@ -1,5 +1,5 @@
 {% extends "wagtailadmin/base.html" %}
-{% load i18n %}
+{% load i18n wagtailadmin_tags %}
 {% block titletag %}{% trans "Link Checker Results" %}{% endblock %}
 {% block bodyclass %}menu-linkchecker{% endblock %}
 {% block content %}
@@ -8,106 +8,23 @@
 
     <div class="nice-padding">
 
+      <form>
+        <select name="groupby" onchange="history.replaceState(null, null, '?'+$(this.form).serialize()); history.go(0)">
+          {% for key, name in groupables.items %}
+          <option value="{{key}}"
+                  {% if groupby == key %}selected{% endif %}
+                  >
+            {% trans 'Group by' %} {{name}}
+          </option>
+          {% endfor %}
+        </select>
+      </form>
+
       <h2>{% blocktrans %}Results{% endblocktrans %}</h2>
 
-      <section class="w-panel full" id="panel-child-inhoud-broken-section" aria-labelledby="panel-child-inhoud-broken-heading" data-panel="">
-        <div class="w-panel__header">
-          <a class="w-panel__anchor w-panel__anchor--prefix" href="#panel-child-inhoud-broken-section" data-panel-anchor="" aria-labelledby="panel-child-inhoud-broken-heading">
-            <svg class="icon icon-link w-panel__icon" aria-hidden="true"><use href="#icon-link"></use></svg>
-          </a>
-          <button class="w-panel__toggle" type="button" aria-label="Toon/verberg sectie" aria-describedby="panel-child-inhoud-broken-heading" data-panel-toggle="" aria-controls="panel-child-inhoud-broken-content" aria-expanded="true">
-            <svg class="icon icon-arrow-down-big w-panel__icon" aria-hidden="true"><use href="#icon-arrow-down-big"></use></svg>
-          </button>
-          <h2 class="w-panel__heading w-panel__heading--label" id="panel-child-inhoud-broken-heading" data-panel-heading="">
-            {% blocktrans %}Broken Links{% endblocktrans %}
-          </h2>
-          <a class="w-panel__anchor w-panel__anchor--suffix" href="#panel-child-inhoud-broken-section" aria-labelledby="panel-child-inhoud-broken-heading">
-            <svg class="icon icon-link w-panel__icon" aria-hidden="true"><use href="#icon-link"></use></svg>
-          </a>
-          <div class="w-panel__divider"></div>
-        </div>
-        <div id="panel-child-inhoud-broken-content" class="w-panel__content">
-          {% if scan.links.broken_links.exists %}
-          <form>
-            <select name="groupby" onchange="history.replaceState(null, null, '?'+$(this.form).serialize()); history.go(0)">
-              {% for key, name in groupables.items %}
-              <option value="{{key}}" {% if groupby == key %}selected{% endif %}>{% trans 'Group by' %} {{name}}</option>
-              {% endfor %}
-            </select>
-          </form>
-          {% regroup broken by groupby as link_groups %}
-          {% for link_group in link_groups %}
-          <h3>{{ link_group.grouper|default:"Anders" }}</h3>
-          {% for link in link_group.list %}
-          <p>
-          <a href='{{link}}' target="_blank">{{link}}</a>{% if link.page %} - <a href="{% url 'wagtailadmin_pages:edit' link.page.id %}" target="_blank" class="button button-small">{% blocktrans %}Edit page containing this link{% endblocktrans %}</a>{% endif %}
-          {% if link.status_code %}<br /><b>{% blocktrans %}Status Code{% endblocktrans %}: </b>{{link.status_code}}{% endif %}
-          {% if link.error_text %}<br /><b>{% blocktrans %}Error{% endblocktrans %}: </b>{{link.error_text}}{% endif %}
-          {% if link.page_is_deleted %}<br /><b>{% blocktrans %}Info: </b>PAGE CONTAINING THIS LINK WAS DELETED{% endblocktrans %}{% endif %}
-          </p>
-          {% endfor %}
-          {% endfor %}
-          {% else %}
-          <p>{% blocktrans %}Congratulations, there are no broken links!{% endblocktrans %}</p>
-          {% endif %}
-        </div>
-      </section>
-
-      <section class="w-panel full" id="panel-child-inhoud-working-section" aria-labelledby="panel-child-inhoud-working-heading" data-panel="">
-        <div class="w-panel__header">
-          <a class="w-panel__anchor w-panel__anchor--prefix" href="#panel-child-inhoud-working-section" data-panel-anchor="" aria-labelledby="panel-child-inhoud-working-heading">
-            <svg class="icon icon-link w-panel__icon" aria-hidden="true"><use href="#icon-link"></use></svg>
-          </a>
-          <button class="w-panel__toggle" type="button" aria-label="Toon/verberg sectie" aria-describedby="panel-child-inhoud-working-heading" data-panel-toggle="" aria-controls="panel-child-inhoud-working-content" aria-expanded="true">
-            <svg class="icon icon-arrow-down-big w-panel__icon" aria-hidden="true"><use href="#icon-arrow-down-big"></use></svg>
-          </button>
-          <h2 class="w-panel__heading w-panel__heading--label" id="panel-child-inhoud-working-heading" data-panel-heading="">
-            {% blocktrans %}Working Links{% endblocktrans %}
-          </h2>
-          <a class="w-panel__anchor w-panel__anchor--suffix" href="#panel-child-inhoud-working-section" aria-labelledby="panel-child-inhoud-working-heading">
-            <svg class="icon icon-link w-panel__icon" aria-hidden="true"><use href="#icon-link"></use></svg>
-          </a>
-          <div class="w-panel__divider"></div>
-        </div>
-        <div id="panel-child-inhoud-working-content" class="w-panel__content">
-          {% if scan.links.working_links.exists %}
-          {% for link in scan.links.working_links.all %}
-          <p>
-          <a href='{{link}}' target="_blank">{{link}}</a>{% if link.page_is_deleted %} - {% blocktrans %}PAGE CONTAINING LINK WAS DELETED {% endblocktrans %}{% endif %}
-          </p>
-          {% endfor %}
-          {% else %}
-          <p>{% blocktrans %}There are no working links!{% endblocktrans %}</p>
-          {% endif %}
-        </div>
-      </section>
-
-      {% if scan.links.non_scanned_links.exists %}
-      <section class="w-panel full" id="panel-child-inhoud-todo-section" aria-labelledby="panel-child-inhoud-todo-heading" data-panel="">
-        <div class="w-panel__header">
-          <a class="w-panel__anchor w-panel__anchor--prefix" href="#panel-child-inhoud-todo-section" data-panel-anchor="" aria-labelledby="panel-child-inhoud-todo-heading">
-            <svg class="icon icon-link w-panel__icon" aria-hidden="true"><use href="#icon-link"></use></svg>
-          </a>
-          <button class="w-panel__toggle" type="button" aria-label="Toon/verberg sectie" aria-describedby="panel-child-inhoud-todo-heading" data-panel-toggle="" aria-controls="panel-child-inhoud-todo-content" aria-expanded="true">
-            <svg class="icon icon-arrow-down-big w-panel__icon" aria-hidden="true"><use href="#icon-arrow-down-big"></use></svg>
-          </button>
-          <h2 class="w-panel__heading w-panel__heading--label" id="panel-child-inhoud-todo-heading" data-panel-heading="">
-            {% blocktrans %}Links To Be Scanned {% endblocktrans %}
-          </h2>
-          <a class="w-panel__anchor w-panel__anchor--suffix" href="#panel-child-inhoud-todo-section" aria-labelledby="panel-child-inhoud-todo-heading">
-            <svg class="icon icon-link w-panel__icon" aria-hidden="true"><use href="#icon-link"></use></svg>
-          </a>
-          <div class="w-panel__divider"></div>
-        </div>
-        <div id="panel-child-inhoud-todo-content" class="w-panel__content">
-          {% for link in scan.links.non_scanned_links %}
-          <p>
-          <a href='{{link}}' target="_blank">{{link}}</a>{% if link.page_is_deleted %} - {% blocktrans %}PAGE CONTAINING LINK WAS DELETED{% endblocktrans %}{% endif %}
-          </p>
-          {% endfor %}
-        </div>
-      </section>
-      {% endif %}
+      {% for panel in panels %}
+      {% component panel %}
+      {% endfor %}
 
       <a href="{% url 'wagtaillinkchecker' %}" class="button bicolor icon icon-arrow-left">{% blocktrans %}Back{% endblocktrans %}</a>
     </div>
