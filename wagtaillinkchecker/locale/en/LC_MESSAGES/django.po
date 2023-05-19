@@ -1,0 +1,294 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-05-19 13:29+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:28
+msgid "Automatically remove old scans"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:29
+msgid "Automated Cleanup"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:33
+msgid "Number of days to keep scans in automated cleanup"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:34
+msgid "Automated Cleanup Age"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:38
+msgid "Conduct automated sitewide scans for broken links"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:39
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:80
+msgid "Automated Scanning"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:43
+msgid "Send report emails after automated scans"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:44
+msgid "Email Reports"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:48
+msgid "Sender of the problem report emails"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:49
+msgid "Email Sender"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:55
+msgid ""
+"Recipient of the full problem report emails (page owners get reports too)"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:57
+msgid "Email Recipient"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:64
+msgid "User-Agent header to use in scans"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:65
+msgid "User-Agent Header"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/models.py:79
+msgid "Email"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:36
+msgid "Link was invalid"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:39
+msgid "There was an error connecting to this site"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:67
+msgid "Client error"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:69
+msgid "Server Error"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:72
+#, python-brace-format
+msgid "Error: Unknown HTTP Status Code '{0}'"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/delete.html:3
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/index.html:3
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/index.html:10
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/settings.html:3
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/settings.html:10
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/stop.html:3
+#: wagtail-linkchecker/wagtaillinkchecker/wagtail_hooks.py:21
+msgid "Link Checker"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/delete.html:6
+msgid "Delete"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/delete.html:12
+msgid "Are you sure you want to delete these scan results?"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/delete.html:13
+msgid "Yes, delete them"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/index.html:14
+msgid "Conduct Scan"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/index.html:15
+msgid "Settings"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/index.html:23
+msgid "No scans yet!"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/link.html:9
+msgid "Edit page containing this link"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/link.html:14
+msgid "Status Code"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/link.html:18
+msgid "Error"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/link.html:22
+msgid "Info"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/link.html:23
+msgid "PAGE CONTAINING THIS LINK WAS DELETED"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/results.html:3
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scanresults.html:3
+msgid "Link Checker Results"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:5
+msgid "Date"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:6
+msgid "Links Scanned"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:7
+msgid "Results"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:8
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:36
+msgid "Completed"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:18
+msgid "View Scan"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:20
+msgid "Delete Scan"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:22
+msgid "Stop Scan"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:31
+#, python-format
+msgid "%(broken_links)s broken links out of %(links)s links"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:39
+#, python-format
+msgid "%(links)s links found"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:40
+#, python-format
+msgid "%(crawled_links)s links crawled"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:41
+#, python-format
+msgid "%(broken_links)s broken links found"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:49
+#, python-format
+msgid "Page %(number)s of %(total)s"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:55
+msgid "Previous"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scan_list.html:64
+msgid "Next"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scanresults.html:27
+msgid "Grouped by"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/scanresults.html:61
+msgid "Back"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/settings.html:20
+msgid "Save"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/stop.html:6
+msgid "Stop"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/stop.html:12
+msgid "Are you sure you want to stop this scan?"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/stop.html:13
+msgid "Yes, stop it"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:37
+msgid "Status code"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:38
+msgid "Domain name"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:39
+msgid "Page"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:42
+msgid "Broken Links"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:43
+msgid "Working Links"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:44
+msgid "Links To Be Scanned"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:65
+msgid "Other"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:103
+msgid "The scan was stopped."
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:117
+msgid "The scan results were successfully deleted."
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:138
+msgid "Link checker settings have been updated."
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:142
+msgid "The form could not be saved due to validation errors"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/views.py:163
+msgid "No celery workers are running, the scan was not conducted."
+msgstr ""
