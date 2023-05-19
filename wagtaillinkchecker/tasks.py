@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
-from .models import ScanLink
+from .models import ScanLink, get_site_preferences
 
 
 @shared_task
@@ -21,8 +21,13 @@ def check_link(link_pk):
         print(f"Check link {link.url} for page {link.page.id}:")
 
     response = None
+    request_kwargs = dict(verify=True, timeout=60)
+    preferences = get_site_preferences(scan.site)
+    user_agent = preferences.user_agent
+    if user_agent:
+        request_kwargs.update(headers={'User-Agent': user_agent})
     try:
-        response = requests.get(link.url, verify=True, timeout=60)
+        response = requests.get(link.url, **request_kwargs)
     except (
         requests.exceptions.InvalidSchema,
         requests.exceptions.MissingSchema,

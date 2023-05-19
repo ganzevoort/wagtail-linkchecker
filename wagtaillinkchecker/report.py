@@ -3,16 +3,14 @@ from wagtail.models import Page
 from django.conf import settings
 from django.core import mail
 from django.template.loader import render_to_string
-from django.core.exceptions import ObjectDoesNotExist
+
+from .models import get_site_preferences
 
 
 def email_report(scan):
-    try:
-        sender = scan.site.sitepreferences.email_sender
-        default_recipient = scan.site.sitepreferences.email_recipient
-    except ObjectDoesNotExist:
-        sender = settings.DEFAULT_FROM_EMAIL
-        default_recipient = None
+    preferences = get_site_preferences(scan.site)
+    sender = preferences.email_sender
+    default_recipient = preferences.email_recipient
 
     outbox = defaultdict(list)
     name = defaultdict(str)

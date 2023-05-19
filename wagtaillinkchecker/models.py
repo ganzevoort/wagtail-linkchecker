@@ -1,4 +1,5 @@
 from urllib.parse import urlparse, urljoin
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_delete
@@ -6,7 +7,15 @@ from django.db.utils import DataError
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel
 from wagtail.models import Site, Page
+
+
+def get_site_preferences(site):
+    try:
+        return site.sitepreferences
+    except ObjectDoesNotExist:
+        return SitePreferences.objects.create(site=site)
 
 
 class SitePreferences(models.Model):
@@ -47,6 +56,30 @@ class SitePreferences(models.Model):
             '(page owners get reports too)'),
         verbose_name=_('Email Recipient')
     )
+    user_agent = models.CharField(
+        blank=True,
+        default='',
+        max_length=500,
+        help_text=_(
+            'User-Agent header to use in scans'),
+        verbose_name=_('User-Agent Header')
+    )
+
+    panels = [
+        MultiFieldPanel([
+            FieldRowPanel([
+                FieldPanel('automated_scanning'),
+                FieldPanel('automated_cleanup'),
+                FieldPanel('automated_cleanup_days'),
+            ]),
+            MultiFieldPanel([
+                FieldPanel('email_reports'),
+                FieldPanel('email_sender'),
+                FieldPanel('email_recipient'),
+            ], heading=_('Email')),
+        ], heading=_('Automated Scanning')),
+        FieldPanel('user_agent'),
+    ]
 
 
 class Scan(models.Model):

@@ -1,19 +1,11 @@
 from datetime import timedelta
 from django.utils import timezone
 from django.core.management.base import BaseCommand
-from django.core.exceptions import ObjectDoesNotExist
 
 from wagtail.models import Site
 
-from wagtaillinkchecker.models import Scan, SitePreferences
+from wagtaillinkchecker.models import Scan, get_site_preferences
 from wagtaillinkchecker.report import email_report
-
-
-def get_site_preferences(site):
-    try:
-        return site.sitepreferences
-    except ObjectDoesNotExist:
-        return SitePreferences.objects.create(site=site)
 
 
 def cleanup(site, preferences, verbosity):
