@@ -1,6 +1,5 @@
 from urllib.parse import urlparse, urljoin
 from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.db.utils import DataError
@@ -44,7 +43,8 @@ class SitePreferences(models.Model):
         verbose_name=_('Email Reports'),
     )
     email_sender = models.EmailField(
-        default=settings.DEFAULT_FROM_EMAIL,
+        blank=True,
+        default='',
         help_text=_('Sender of the problem report emails'),
         verbose_name=_('Email Sender')
     )

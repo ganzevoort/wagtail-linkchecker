@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sitepreferences',
             name='email_sender',
-            field=models.EmailField(default='noreply@regieorgaan-sia.nl', help_text='Sender of the problem report emails', max_length=254),
+            field=models.EmailField(nlank=True, default='', help_text='Sender of the problem report emails', max_length=254),
         ),
     ]

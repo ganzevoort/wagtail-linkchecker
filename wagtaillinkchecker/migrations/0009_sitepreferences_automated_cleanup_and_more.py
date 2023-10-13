@@ -38,6 +38,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sitepreferences',
             name='email_sender',
-            field=models.EmailField(default='noreply@regieorgaan-sia.nl', help_text='Sender of the problem report emails', max_length=254, verbose_name='Email Sender'),
+            field=models.EmailField(blank=True, default='', help_text='Sender of the problem report emails', max_length=254, verbose_name='Email Sender'),
         ),
     ]

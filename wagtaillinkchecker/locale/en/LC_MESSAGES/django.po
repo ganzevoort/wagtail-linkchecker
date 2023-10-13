@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-19 13:29+0200\n"
+"POT-Creation-Date: 2023-05-25 16:51+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
 #: wagtail-linkchecker/wagtaillinkchecker/models.py:28
 msgid "Automatically remove old scans"
 msgstr ""
@@ -79,25 +80,25 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:36
-msgid "Link was invalid"
-msgstr ""
-
-#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:39
-msgid "There was an error connecting to this site"
-msgstr ""
-
-#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:67
+#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:38
 msgid "Client error"
 msgstr ""
 
-#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:69
+#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:40
 msgid "Server Error"
 msgstr ""
 
-#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:72
+#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:43
 #, python-brace-format
 msgid "Error: Unknown HTTP Status Code '{0}'"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:73
+msgid "Link was invalid"
+msgstr ""
+
+#: wagtail-linkchecker/wagtaillinkchecker/tasks.py:76
+msgid "There was an error connecting to this site"
 msgstr ""
 
 #: wagtail-linkchecker/wagtaillinkchecker/templates/wagtaillinkchecker/delete.html:3

@@ -9,7 +9,7 @@ from .models import get_site_preferences
 
 def email_report(scan):
     preferences = get_site_preferences(scan.site)
-    sender = preferences.email_sender
+    sender = preferences.email_sender or settings.DEFAULT_FROM_EMAIL
     default_recipient = preferences.email_recipient
 
     outbox = defaultdict(list)
