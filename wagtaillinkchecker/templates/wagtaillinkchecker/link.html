@@ -18,6 +18,10 @@
 <br/><b>{% trans 'Error' %}:</b> {{link.error_text}}
 {% endif %}
 
+{% if link.validation_result %}
+<br/><b>{% trans 'HTML Validation Result' %}:</b> {{link.validation_result}}
+{% endif %}
+
 {% if link.page_is_deleted %}
 <br/><b>{% trans 'Info' %}:</b>
 {% trans 'PAGE CONTAINING THIS LINK WAS DELETED' %}

@@ -59,6 +59,8 @@ def scan(request, scan_pk):
         links = links.working_links()
     elif resultclass == 'todo':
         links = links.non_scanned_links()
+    elif resultclass == 'validator':
+        links = links.filter(validation_result__isnull=False)
     groups = links.values_list('groupby', flat=True).distinct('groupby')
     link_groups = [
         {
