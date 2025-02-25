@@ -42,6 +42,7 @@ def scan(request, scan_pk):
         'broken': _('Broken Links'),
         'working': _('Working Links'),
         'todo': _('Links To Be Scanned'),
+        'validator': _('HTML Validator Results'),
     }
     if groupby not in groupables:
         groupby = 'status_code'

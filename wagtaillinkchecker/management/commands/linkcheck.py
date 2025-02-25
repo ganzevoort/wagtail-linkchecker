@@ -11,7 +11,7 @@ from wagtaillinkchecker.report import email_report
 def cleanup(site, preferences, verbosity):
     cutoff_age = timedelta(days=preferences.automated_cleanup_days)
     cutoff = timezone.now() - cutoff_age
-    for scan in Scan.objects.filter(site=site, scan_started__lt=cutoff):
+    for scan in Scan.objects.filter(site=site, scan_started__lt=cutoff).order_by('scan_started'):
         if verbosity:
             print(f"Automated cleanup: remove {scan}")
         scan.delete()

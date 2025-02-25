@@ -25,6 +25,8 @@ def link_is_ok(link, content):
                 print(f"\t{new_link.url}")
         for new_link in new_links:
             new_link.check_link()
+        if preferences.html_validate:
+            html_validate(link, content)
 
 
 def link_is_broken(link):
@@ -89,3 +91,38 @@ def check_link(link_pk):
     if not scan.links.non_scanned_links():
         scan.scan_finished = timezone.now()
         scan.save()
+
+
+def html_validate(link, content):
+    scan = link.scan
+    preferences = get_site_preferences(scan.site)
+
+    try:
+        response = requests.post(
+            preferences.html_validator_url,
+            params={'out': 'json'},
+            data=content,
+            verify=True,
+            timeout=60,
+            headers={
+                'Content-Type': 'text/html; charset=utf-8',
+                'User-Agent': preferences.user_agent,
+            },
+        )
+    except (
+        requests.exceptions.InvalidSchema,
+        requests.exceptions.MissingSchema,
+    ):
+        return  # something wrong with preferences.html_validator_url
+    except requests.exceptions.ConnectionError:
+        return  # validator offline
+    except requests.exceptions.RequestException as e:
+        return  # validator broken?
+    else:
+        if response.status_code not in range(100, 400):
+            return  # validator not happy
+
+    # validator happy
+    link.validation_result = response.json()
+    link.save()
+    from pprint import pprint; pprint(link.validation_result)

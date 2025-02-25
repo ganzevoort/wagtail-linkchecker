@@ -64,6 +64,17 @@ class SitePreferences(models.Model):
             'User-Agent header to use in scans'),
         verbose_name=_('User-Agent Header')
     )
+    html_validate = models.BooleanField(
+        default=False,
+        help_text=_('Use validator.w3.org to check pages'),
+        verbose_name=_('Use HTML validator'),
+    )
+    html_validator_url = models.URLField(
+        blank=True,
+        default="https://validator.w3.org/nu/?out=json",
+        help_text=_('URL of validator to check pages'),
+        verbose_name=_('HTML validator URL'),
+    )
 
     panels = [
         MultiFieldPanel([
@@ -79,6 +90,12 @@ class SitePreferences(models.Model):
             ], heading=_('Email')),
         ], heading=_('Automated Scanning')),
         FieldPanel('user_agent'),
+        MultiFieldPanel([
+            FieldRowPanel([
+                FieldPanel('html_validate'),
+                FieldPanel('html_validator_url'),
+            ]),
+        ], heading=_('HTML validation'))
     ]
 
 
@@ -183,6 +200,9 @@ class ScanLink(models.Model):
     # Error returned from link, if it is broken
     status_code = models.IntegerField(blank=True, null=True)
     error_text = models.TextField(blank=True, null=True)
+
+    # Output from HTML validator
+    validation_result = models.JSONField(blank=True, null=True)
 
     # Page where link was found
     page = models.ForeignKey(Page, null=True, on_delete=models.SET_NULL)

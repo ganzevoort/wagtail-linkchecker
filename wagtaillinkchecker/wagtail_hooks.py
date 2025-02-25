@@ -20,6 +20,6 @@ def register_menu_settings():
     return MenuItem(
         _('Link Checker'),
         urlresolvers.reverse('wagtaillinkchecker'),
-        classnames='icon icon-link',
+        icon_name='link',
         order=300
     )
